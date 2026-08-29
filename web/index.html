@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Auriva OpenAI Demo</title>
+    <style>
+      body { font-family: system-ui, Arial; margin: 2rem; }
+      textarea { width: 100%; height: 120px; }
+      #chat { white-space: pre-wrap; border: 1px solid #ddd; padding: 1rem; min-height: 120px; }
+    </style>
+  </head>
+  <body>
+    <h1>Auriva OpenAI Demo</h1>
+    <p>Backend URL: <input id="apiUrl" value="http://localhost:3000/api/chat" style="width:50%"/></p>
+    <textarea id="prompt">Write a short summary of the repository and next steps for improving documentation.</textarea>
+    <p><button id="send">Send</button></p>
+    <h2>Response</h2>
+    <div id="chat"></div>
+
+    <script>
+      document.getElementById('send').addEventListener('click', async () => {
+        const apiUrl = document.getElementById('apiUrl').value;
+        const prompt = document.getElementById('prompt').value;
+        const messages = [ { role: 'user', content: prompt } ];
+        document.getElementById('chat').textContent = 'Waiting for response...';
+        try {
+          const r = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages })
+          });
+          if (!r.ok) {
+            const text = await r.text();
+            document.getElementById('chat').textContent = `Error ${r.status}: ${text}`;
+            return;
+          }
+          const data = await r.json();
+          // the OpenAI chat/completions response has choices[0].message.content
+          const content = data?.choices?.[0]?.message?.content || JSON.stringify(data, null, 2);
+          document.getElementById('chat').textContent = content;
+        } catch (e) {
+          document.getElementById('chat').textContent = 'Request failed: ' + e.message;
+        }
+      });
+    </script>
+  </body>
+</html>
